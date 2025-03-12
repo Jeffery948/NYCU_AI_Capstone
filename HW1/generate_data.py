@@ -33,7 +33,7 @@ for i, prompt in enumerate(prompts):
         img_data = response.json().get("images")[0]  # 返回是 base64 編碼的圖片
         # 解碼 base64 並儲存為檔案
         img_bytes = base64.b64decode(img_data)
-        img_path = os.path.join(SAVE_DIR, f"{i+1}.png")
+        img_path = os.path.join(SAVE_DIR, f"{i+1}.jpg")
         with open(img_path, "wb") as f:
             f.write(img_bytes)
         print(f"Generated: {img_path}")
