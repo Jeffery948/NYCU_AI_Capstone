@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from skimage.feature import hog
-from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
 from sklearn.utils import shuffle
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_auc_score, roc_curve
@@ -52,7 +52,6 @@ real_test = 'clean_data/test/real'
 ai_train = 'clean_data/train/ai'
 ai_test = 'clean_data/test/ai'
 X_train, X_test, Y_train, Y_test = [], [], [], []
-
 for img_file in os.listdir(real_train):
     X_train.append(extract_hog_features(os.path.join(real_train, img_file)))
     #X_train.append(extract_hog_features(os.path.join(real_train, img_file), augment=True))
@@ -61,6 +60,7 @@ for img_file in os.listdir(real_train):
 for img_file in os.listdir(real_test):
     X_test.append(extract_hog_features(os.path.join(real_test, img_file)))
     Y_test.append(0)
+index = 0
 for img_file in os.listdir(ai_train):
     X_train.append(extract_hog_features(os.path.join(ai_train, img_file)))
     #X_train.append(extract_hog_features(os.path.join(ai_train, img_file), augment=True))
@@ -94,16 +94,16 @@ X_train_pca = pca.fit_transform(X_train)
 X_test_pca = pca.transform(X_test)
 print(X_train_pca.shape, X_test_pca.shape)
 
-# 訓練 SVM
-svm = SVC(kernel='linear', probability=True)
-svm.fit(X_train_pca, Y_train)
+# 訓練 Logistic Regression
+clf = LogisticRegression(penalty='l1', solver='liblinear')
+clf.fit(X_train_pca, Y_train)
 
 # 預測 & 評估
-y_pred = svm.predict(X_test_pca)
+y_pred = clf.predict(X_test_pca)
 accuracy = accuracy_score(Y_test, y_pred)
 conf_matrix = confusion_matrix(Y_test, y_pred)
 report = classification_report(Y_test, y_pred)
-roc_auc = roc_auc_score(Y_test, svm.predict_proba(X_test_pca)[:, 1])
+roc_auc = roc_auc_score(Y_test, clf.predict_proba(X_test_pca)[:, 1])
 
 # 繪製 Confusion Matrix
 plt.figure(figsize=(9,9))
@@ -111,21 +111,21 @@ sns.heatmap(conf_matrix, annot=True, fmt=".3f", linewidths=0.5, square=True, cma
 plt.ylabel('Actual Label', size=12)
 plt.xlabel('Predicted Label', size=12)
 plt.title(f'Accuracy Score: {accuracy:.4f}', size = 16)
-plt.savefig('confusion matrix_SVM13.jpg')
+plt.savefig('LR_graph/confusion matrix_LR11.jpg')
 plt.show()
 
 # 交叉驗證
-cv_scores = cross_val_score(svm, X_train_pca, Y_train, cv=5)
+cv_scores = cross_val_score(clf, X_train_pca, Y_train, cv=5)
 
 # 繪製 ROC 曲線
-fpr, tpr, _ = roc_curve(Y_test, svm.predict_proba(X_test_pca)[:, 1])
+fpr, tpr, _ = roc_curve(Y_test, clf.predict_proba(X_test_pca)[:, 1])
 plt.plot(fpr, tpr, label=f'AUROC = {roc_auc:.2f}')
 plt.plot([0, 1], [0, 1], linestyle='--', color='gray')
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title('ROC Curve')
 plt.legend()
-plt.savefig('ROC_SVM13.jpg')
+plt.savefig('LR_graph/ROC_LR11.jpg')
 plt.show()
 
 # 輸出結果
