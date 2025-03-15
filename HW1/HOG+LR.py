@@ -10,27 +10,27 @@ from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_auc_score, roc_curve
 from sklearn.decomposition import PCA
 
-# 左右翻轉
+# Flip image horizontally
 def flip_image(image):
     return cv2.flip(image, 1)
 
-# 旋轉小角度
+# Rotate image by a small angle
 def rotate_image(image, angle=10):
     h, w = image.shape[:2]
     center = (w // 2, h // 2)
     M = cv2.getRotationMatrix2D(center, angle, 1.0)
     return cv2.warpAffine(image, M, (w, h))
 
-# 調整亮度對比
+# Adjust brightness and contrast
 def adjust_brightness_contrast(image, alpha=1.2, beta=10):
     return cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
 
-# 加雜訊
+# Add Gaussian noise
 def add_gaussian_noise(image, mean=0, std=15):
     noise = np.random.normal(mean, std, image.shape).astype(np.uint8)
     return cv2.add(image, noise)
 
-# 設定 HOG 參數
+# Set HOG parameters
 hog_params = dict(
     pixels_per_cell=(8, 8),
     cells_per_block=(3, 3),
@@ -39,14 +39,14 @@ hog_params = dict(
 )
 
 def extract_hog_features(image_path, augment=False):
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # 讀取灰階
-    image = cv2.resize(image, (512, 512))  # 調整大小
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # Read in grayscale
+    image = cv2.resize(image, (512, 512))  # Resize image
     if augment:
         image = add_gaussian_noise(image)
     features = hog(image, **hog_params)
     return features
 
-# 讀取資料
+# Load data
 real_train = 'clean_data/train/real'
 real_test = 'clean_data/test/real'
 ai_train = 'clean_data/train/ai'
@@ -55,16 +55,15 @@ X_train, X_test, Y_train, Y_test = [], [], [], []
 for img_file in os.listdir(real_train):
     X_train.append(extract_hog_features(os.path.join(real_train, img_file)))
     #X_train.append(extract_hog_features(os.path.join(real_train, img_file), augment=True))
-    Y_train.append(0)  # 標記為 real (0)
+    Y_train.append(0)  # Label as real (0)
     #Y_train.append(0)
 for img_file in os.listdir(real_test):
     X_test.append(extract_hog_features(os.path.join(real_test, img_file)))
     Y_test.append(0)
-index = 0
 for img_file in os.listdir(ai_train):
     X_train.append(extract_hog_features(os.path.join(ai_train, img_file)))
     #X_train.append(extract_hog_features(os.path.join(ai_train, img_file), augment=True))
-    Y_train.append(1)  # 標記為 AI (1)
+    Y_train.append(1)  # Label as AI (1)
     #Y_train.append(1)
 for img_file in os.listdir(ai_test):
     X_test.append(extract_hog_features(os.path.join(ai_test, img_file)))
@@ -75,49 +74,42 @@ X_test = np.array(X_test)
 Y_train = np.array(Y_train)
 Y_test = np.array(Y_test)
 
-# 設定隨機種子，確保可復現
+# Set random seed for reproducibility
 random_seed = 42
 
-# Shuffle X_train 和 Y_train
+# Shuffle X_train and Y_train
 X_train, Y_train = shuffle(X_train, Y_train, random_state=random_seed)
-print(len(X_train), len(Y_train) , len(X_test), len(Y_test), X_train.shape, X_test.shape)
-
-'''pca = PCA() # 計算有多少 components can retain 95% variance after dimensionality reduction
-pca.fit(X_train)
-cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
-n_components_95 = np.argmax(cumulative_variance >= 0.95) + 1
-print(f"Number of components to retain 95% variance: {n_components_95}")
-exit(0)'''
+print(len(X_train), len(Y_train), len(X_test), len(Y_test), X_train.shape, X_test.shape)
 
 pca = PCA(n_components=10)
 X_train_pca = pca.fit_transform(X_train)
 X_test_pca = pca.transform(X_test)
 print(X_train_pca.shape, X_test_pca.shape)
 
-# 訓練 Logistic Regression
+# Train Logistic Regression
 clf = LogisticRegression(penalty='l1', solver='liblinear')
 clf.fit(X_train_pca, Y_train)
 
-# 預測 & 評估
+# Prediction & Evaluation
 y_pred = clf.predict(X_test_pca)
 accuracy = accuracy_score(Y_test, y_pred)
 conf_matrix = confusion_matrix(Y_test, y_pred)
 report = classification_report(Y_test, y_pred)
 roc_auc = roc_auc_score(Y_test, clf.predict_proba(X_test_pca)[:, 1])
 
-# 繪製 Confusion Matrix
+# Plot Confusion Matrix
 plt.figure(figsize=(9,9))
 sns.heatmap(conf_matrix, annot=True, fmt=".3f", linewidths=0.5, square=True, cmap="mako")
 plt.ylabel('Actual Label', size=12)
 plt.xlabel('Predicted Label', size=12)
-plt.title(f'Accuracy Score: {accuracy:.4f}', size = 16)
-plt.savefig('LR_graph/confusion matrix_LR11.jpg')
+plt.title(f'Accuracy Score: {accuracy:.4f}', size=16)
+plt.savefig('LR_graph/confusion_matrix_LR11.jpg')
 plt.show()
 
-# 交叉驗證
+# Cross-validation
 cv_scores = cross_val_score(clf, X_train_pca, Y_train, cv=5)
 
-# 繪製 ROC 曲線
+# Plot ROC Curve
 fpr, tpr, _ = roc_curve(Y_test, clf.predict_proba(X_test_pca)[:, 1])
 plt.plot(fpr, tpr, label=f'AUROC = {roc_auc:.2f}')
 plt.plot([0, 1], [0, 1], linestyle='--', color='gray')
@@ -128,7 +120,7 @@ plt.legend()
 plt.savefig('LR_graph/ROC_LR11.jpg')
 plt.show()
 
-# 輸出結果
+# Output results
 print(f'Accuracy: {accuracy * 100:.2f}%')
 print(f'AUROC = {roc_auc:.2f}')
 print(f'Confusion Matrix:\n{conf_matrix}')

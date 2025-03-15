@@ -2,20 +2,20 @@ import requests
 import os
 import base64
 
-# Stable Diffusion API 端點
+# Stable Diffusion API endpoint
 url = "http://127.0.0.1:7860/sdapi/v1/txt2img"
 
 SAVE_DIR = "raw_data/ai_animal_images"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-# 讀取提示詞
+# Read prompts
 with open('prompts.txt', 'r') as f:
     prompts = f.readlines()
 
 with open('negative prompt.txt', 'r') as ff:
     negative_prompts = ff.readline()
 
-# 生成圖片
+# Generate images
 for i, prompt in enumerate(prompts):
     payload = {
         "prompt": prompt.strip(),
@@ -30,8 +30,8 @@ for i, prompt in enumerate(prompts):
     }
     response = requests.post(url, json=payload)
     if response.status_code == 200:
-        img_data = response.json().get("images")[0]  # 返回是 base64 編碼的圖片
-        # 解碼 base64 並儲存為檔案
+        img_data = response.json().get("images")[0]  # The returned image is base64 encoded
+        # Decode base64 and save as a file
         img_bytes = base64.b64decode(img_data)
         img_path = os.path.join(SAVE_DIR, f"{i+1}.jpg")
         with open(img_path, "wb") as f:
@@ -41,4 +41,4 @@ for i, prompt in enumerate(prompts):
         print(f"Failed to generate image {i+1}")
         print(response.status_code)
 
-print("AI 動物圖片生成完成！")
+print("AI-generated animal images are complete!")

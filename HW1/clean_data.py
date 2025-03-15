@@ -2,29 +2,29 @@ import os
 import random
 from PIL import Image
 
-# 原始資料夾
+# Original data folder
 real_dir = "raw_data/real_animal_images"
 ai_dir = "raw_data/ai_animal_images"
 
-# 目標資料夾
+# Target folders
 train_real_dir = "clean_data/train/real"
 train_ai_dir = "clean_data/train/ai"
 test_real_dir = "clean_data/test/real"
 test_ai_dir = "clean_data/test/ai"
 
-# 確保目標資料夾存在
+# Ensure target folders exist
 for folder in [train_real_dir, train_ai_dir, test_real_dir, test_ai_dir]:
     os.makedirs(folder, exist_ok=True)
 
-# 取得所有圖片
+# Get all image paths
 real_images = [os.path.join(real_dir, f) for f in os.listdir(real_dir)]
 ai_images = [os.path.join(ai_dir, f) for f in os.listdir(ai_dir)]
 
-# 隨機打亂圖片
+# Shuffle the images randomly
 random.shuffle(real_images)
 random.shuffle(ai_images)
 
-# 分割training/testing set
+# Split into training/testing sets
 train_real = real_images[:225]
 test_real = real_images[225:300]
 train_ai = ai_images[:225]
@@ -36,7 +36,7 @@ def process_and_save(images, output_dir):
         img_name = os.path.basename(img_path)
         img.save(os.path.join(output_dir, img_name))
 
-# 移動圖片到對應的資料夾
+# Move images to corresponding folders
 process_and_save(train_real, train_real_dir)
 process_and_save(test_real, test_real_dir)
 process_and_save(train_ai, train_ai_dir)
