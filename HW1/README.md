@@ -1,4 +1,4 @@
-### Real and AI-generated animal photos classification
+### Real and AI-generated animal photos recognition
 
 I implement three methods for this task:
 - SVM
