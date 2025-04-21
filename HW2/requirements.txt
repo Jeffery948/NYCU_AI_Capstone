@@ -1,0 +1,8 @@
+gymnasium[box2d,atari,accept-rom-license]
+torch
+numpy
+pandas
+matplotlib
+moviepy
+ale-py
+swig

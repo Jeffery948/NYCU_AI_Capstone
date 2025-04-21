@@ -1,0 +1,12 @@
+1. Mean return: 195.32, Std: 86.72
+2. Mean return: 224.21, Std: 66.70
+3. Mean return: 241.01, Std: 62.06
+Testing with seed 9...
+Test result over 100 episodes:
+Mean return: 270.18, Std: 40.19
+4. Mean return: 223.65, Std: 77.37
+5. Mean return: 195.77, Std: 87.28
+6. Mean return: 223.08, Std: 96.24
+7. Mean return: 215.85, Std: 92.95
+
+random_polciy: Mean return: -170.15, Std: 98.33
